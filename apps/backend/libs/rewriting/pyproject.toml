@@ -1,0 +1,33 @@
+[project]
+name = "rewriting"
+version = "0.1.0"
+description = "Writing modes, rewrite prompts and the generate -> verify -> select loop"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.8",
+    "pyyaml>=6.0",
+    "structlog>=26.1.0",
+    "llm-client",
+    "docmodel",
+    "verification",
+    "detection",
+]
+
+[project.scripts]
+dtt = "rewriting.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+llm-client = { workspace = true }
+docmodel = { workspace = true }
+verification = { workspace = true }
+detection = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"

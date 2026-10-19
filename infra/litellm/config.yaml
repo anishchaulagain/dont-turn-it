@@ -1,0 +1,72 @@
+# LiteLLM is used purely as a provider adapter: one model_name per deployment.
+# Routing, fallbacks, rate limits and circuit breaking live in the AI Gateway
+# (infra/gateway/routes.yaml), so LiteLLM retries/fallbacks are disabled here.
+
+model_list:
+  # ---- Groq ----
+  - model_name: groq-gpt-oss-20b
+    litellm_params:
+      model: groq/openai/gpt-oss-20b
+      api_key: os.environ/GROQ_API_KEY
+  - model_name: groq-gpt-oss-120b
+    litellm_params:
+      model: groq/openai/gpt-oss-120b
+      api_key: os.environ/GROQ_API_KEY
+
+  # ---- Gemini ----
+  - model_name: gemini-2.5-flash
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+  - model_name: gemini-2.5-flash-lite
+    litellm_params:
+      model: gemini/gemini-2.5-flash-lite
+      api_key: os.environ/GEMINI_API_KEY
+
+  # ---- OpenRouter (:free) ----
+  - model_name: openrouter-gemma-4-31b
+    litellm_params:
+      model: openrouter/google/gemma-4-31b-it:free
+      api_key: os.environ/OPENROUTER_API_KEY
+  - model_name: openrouter-nemotron-3-super
+    litellm_params:
+      model: openrouter/nvidia/nemotron-3-super-120b-a12b:free
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  # ---- Mistral (La Plateforme) ----
+  - model_name: mistral-small
+    litellm_params:
+      model: mistral/mistral-small-latest
+      api_key: os.environ/MISTRAL_API_KEY
+  - model_name: mistral-medium
+    litellm_params:
+      model: mistral/mistral-medium-latest
+      api_key: os.environ/MISTRAL_API_KEY
+  - model_name: mistral-embed
+    litellm_params:
+      model: mistral/mistral-embed
+      api_key: os.environ/MISTRAL_API_KEY
+
+  # ---- Ollama ----
+  - model_name: ollama-qwen2.5-7b
+    litellm_params:
+      model: ollama_chat/qwen2.5:7b
+      api_base: os.environ/OLLAMA_API_BASE
+  - model_name: ollama-mistral-7b
+    litellm_params:
+      model: ollama_chat/mistral:7b
+      api_base: os.environ/OLLAMA_API_BASE
+  - model_name: ollama-nomic-embed
+    litellm_params:
+      model: ollama/nomic-embed-text
+      api_base: os.environ/OLLAMA_API_BASE
+
+router_settings:
+  num_retries: 0
+  timeout: 120
+
+litellm_settings:
+  drop_params: true
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

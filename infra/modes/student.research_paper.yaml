@@ -1,0 +1,35 @@
+id: student.research_paper
+audience: student
+label: Research paper
+phase: 1
+default_view: coach
+freedom: conservative
+detector_mode: research_paper
+protect_quotations: true
+gates:
+  strict_hedges: true
+  strict_deontic: false
+options:
+  field: [stem, biomedical, social_science, humanities]
+  citation_style: [apa, mla, chicago, harvard, ieee, vancouver]
+  english: [us, uk]
+# First matching rule wins; matched against the block's section heading.
+sections:
+  - match: "abstract|summary"
+    freedom: conservative
+  - match: "method|materials|procedure|experimental setup|data collection"
+    freedom: minimal
+  - match: "result|finding"
+    freedom: minimal
+  - match: "reference|bibliograph|works cited|appendix|acknowledg"
+    freedom: locked
+style_rules:
+  - "Write like an experienced researcher in the field: precise, plain, specific."
+  - Keep every claim at exactly the same strength ("suggests" stays "suggests", "associated with" never becomes "causes").
+  - Keep each citation placeholder attached to the same claim it supported.
+  - Keep technical terms, variable names and units exactly as written.
+  - Remove generic academic filler ("plays a pivotal role", "it is worth noting", "delve into").
+banned:
+  - adding or removing claims, results, numbers, hedges or limitations
+  - changing the procedure order or parameters in methods
+  - adding citations or moving them to different claims

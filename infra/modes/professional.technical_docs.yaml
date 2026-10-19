@@ -1,0 +1,24 @@
+id: professional.technical_docs
+audience: professional
+label: Technical documentation
+phase: 1
+default_view: rewrite
+freedom: moderate
+detector_mode: technical_docs
+protect_quotations: false
+gates:
+  strict_hedges: false
+  strict_deontic: true
+options:
+  doc_type: [readme, how_to, tutorial, concept, reference, release_notes]
+  audience: [developer, admin, end_user]
+  english: [us, uk]
+style_rules:
+  - Second person ("you"), present tense, active voice.
+  - Plain, specific and consistent; one term per concept.
+  - One action per step; keep step order and count.
+  - Remove filler and hype ("simply", "just", "easily", "seamlessly", "robust", "leverage", "comprehensive", "In today's fast-paced...").
+banned:
+  - changing code, commands, flags, paths, API or parameter names, UI labels or version numbers
+  - adding or removing steps, warnings or prerequisites
+  - changing must/should/may requirements

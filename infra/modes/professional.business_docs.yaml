@@ -1,0 +1,23 @@
+id: professional.business_docs
+audience: professional
+label: Business & process docs
+phase: 2
+default_view: rewrite
+freedom: conservative
+detector_mode: business_docs
+protect_quotations: true
+gates:
+  strict_hedges: true
+  strict_deontic: true
+options:
+  doc_type: [sop, policy, report, proposal, wiki]
+  tone: [formal, neutral, plain_language]
+  english: [us, uk]
+style_rules:
+  - Plain language - short sentences, active voice, "you" where it fits.
+  - Keep obligations exactly - must, shall, should, may and their negations stay as written.
+  - Keep defined terms (capitalised, e.g. "the Company") verbatim and consistent.
+  - Keep owners, roles, dates, deadlines, amounts, clause numbers and cross-references unchanged.
+banned:
+  - changing who is responsible for what, or when
+  - softening or strengthening requirements

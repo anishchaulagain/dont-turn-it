@@ -1,0 +1,26 @@
+id: student.essay
+audience: student
+label: Essay
+phase: 1
+default_view: coach
+freedom: moderate
+detector_mode: essay
+protect_quotations: true
+gates:
+  strict_hedges: false
+  strict_deontic: false
+options:
+  level: [high_school, undergraduate, postgraduate]
+  essay_type: [argumentative, expository, narrative, reflective]
+  english: [us, uk]
+  citation_style: [apa, mla, chicago, harvard, none]
+style_rules:
+  - Keep the thesis, the stance and the job of each paragraph (claim, evidence, counterargument, conclusion).
+  - Replace stock transitions and filler ("Moreover,", "In conclusion,", "plays a crucial role", "it is important to note").
+  - Vary sentence openings and lengths the way a thoughtful student writer would.
+  - Keep vocabulary at the writer's level; do not upgrade to more sophisticated words.
+  - First person is fine only if the original already uses it.
+banned:
+  - adding evidence, examples, statistics or sources
+  - changing the argument or its strength
+  - rewriting text inside quotation marks

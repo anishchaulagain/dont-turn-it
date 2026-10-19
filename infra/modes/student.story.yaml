@@ -1,0 +1,22 @@
+id: student.story
+audience: student
+label: Story
+phase: 2
+default_view: coach
+freedom: expressive
+detector_mode: story
+# Dialogue is protected by default; the user can unlock it.
+protect_quotations: true
+gates:
+  strict_hedges: false
+  strict_deontic: false
+options:
+  form: [short_story, personal_narrative, creative_piece]
+style_rules:
+  - Keep every event, its order, the characters, the setting, the point of view and the tense.
+  - Rework rhythm and sentence variety; mix short and long sentences.
+  - Replace clichés and stock imagery ("a testament to", "tapestry", "a sense of", "couldn't help but").
+  - Show rather than tell only by rephrasing details that are already there.
+banned:
+  - inventing events, characters, backstory, imagery or sensory details
+  - changing who says or does what

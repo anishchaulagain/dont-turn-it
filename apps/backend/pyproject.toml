@@ -1,0 +1,50 @@
+# uv workspace root (virtual: not a package itself).
+#   uv sync --all-packages          install every member + dev tools
+#   uv run --package platform-api ...  run within one member
+
+[tool.uv.workspace]
+members = ["libs/*", "services/*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=1.4.0",
+    "httpx>=0.27",
+    "ruff>=0.6",
+    "mypy>=2.4.0",
+    "fakeredis[lua]>=2.26",
+    "types-pyyaml>=6.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["**/alembic/versions/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# Phrase lexicon: one regex per line reads better than wrapped fragments.
+"libs/detection/src/detection/stylometric.py" = ["E501"]
+
+[tool.ruff.lint.isort]
+# libs/db/alembic would otherwise make `alembic` look first-party.
+known-third-party = ["alembic"]
+known-first-party = [
+    "platform_core", "platform_db", "llm_client", "platform_api", "gateway",
+    "docmodel", "verification", "detection", "rewriting",
+]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Header"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+exclude = ["alembic/versions/"]
+
+[[tool.mypy.overrides]]
+module = ["uuid6.*", "asyncpg.*", "fakeredis.*"]
+ignore_missing_imports = true
