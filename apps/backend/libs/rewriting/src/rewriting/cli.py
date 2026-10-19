@@ -1,57 +1,35 @@
-"""`dtt`: run analysis and rewriting on a local file through the AI Gateway.
+"""`dtt`: analyse and rewrite a local file.
 
     uv run dtt modes
     uv run dtt analyze essay.docx --mode student.essay
-    uv run dtt rewrite essay.docx --mode student.essay -o essay.rewritten.docx
+    uv run dtt rewrite essay.docx --mode student.essay --direct
 
-Needs the gateway running (`make up && make migrate && make dev-gateway`) with
-MISTRAL_API_KEY / GROQ_API_KEY set in docker/.env. Environment:
-GATEWAY_URL (default http://localhost:8100), GATEWAY_SERVICE_TOKEN, DTT_TENANT_ID,
-SAPLING_API_KEY (only used with --sapling).
+`--direct` calls providers with keys from docker/.env (no Docker). Without it, the AI
+Gateway at GATEWAY_URL is used (`make up && make migrate && make dev-gateway`).
+SAPLING_API_KEY is only used with --sapling.
 """
 
 import argparse
 import asyncio
-import os
 import sys
 from pathlib import Path
 
-from detection import (
-    Band,
-    DetectorProvider,
-    DocumentAnalysis,
-    SaplingProvider,
-    StylometricProvider,
-    analyze,
-)
-from docmodel import DocFormat, Document, export, parse
-from llm_client import Caller, GatewayClient
-from rewriting.direct import DirectLLM, load_env_file, load_routes
-from rewriting.engine import BlockOutcome, EngineConfig, RewriteEngine
-from rewriting.llm import GatewayLLM, LlmEntailmentScorer
-from rewriting.modes import Mode, default_modes_dir, load_modes
+from detection import Band, DocumentAnalysis, analyze
+from docmodel import DocFormat, Document, parse
+from rewriting.llm import LlmEntailmentScorer
+from rewriting.modes import Mode, load_modes
+from rewriting.pipeline import PipelineResult, Scope, ScoreSummary, run_pipeline
+from rewriting.runtime import detector_providers, open_llm
 
-_LOCAL_TENANT = "00000000-0000-4000-8000-000000000001"
-_FORMATS = {".txt": DocFormat.TXT, ".md": DocFormat.MD, ".docx": DocFormat.DOCX}
+FORMATS = {".txt": DocFormat.TXT, ".md": DocFormat.MD, ".docx": DocFormat.DOCX}
 _BAND_MARK = {Band.ELEVATED: "!!", Band.UNCERTAIN: "? ", Band.LOW: "  ", Band.ABSTAIN: "~ "}
 
 
-def _load(path: Path) -> tuple[bytes, Document]:
-    fmt = _FORMATS.get(path.suffix.lower())
+def _format_of(path: Path) -> DocFormat:
+    fmt = FORMATS.get(path.suffix.lower())
     if fmt is None:
         sys.exit(f"unsupported file type {path.suffix}; use .txt, .md or .docx")
-    data = path.read_bytes()
-    return data, parse(data, fmt)
-
-
-async def _analyze(doc: Document, mode: Mode, sapling: bool) -> DocumentAnalysis:
-    providers: list[DetectorProvider] = [StylometricProvider(mode.detector_mode)]
-    if sapling:
-        key = os.environ.get("SAPLING_API_KEY", "")
-        if not key:
-            sys.exit("--sapling needs SAPLING_API_KEY")
-        providers.append(SaplingProvider(key))
-    return await analyze(doc, providers)
+    return fmt
 
 
 def _print_analysis(doc: Document, result: DocumentAnalysis) -> None:
@@ -75,25 +53,24 @@ def _print_analysis(doc: Document, result: DocumentAnalysis) -> None:
     print("These are style indicators, not evidence of who wrote the text.")
 
 
-def _report(outcomes: list[BlockOutcome], mode: Mode) -> str:
-    lines = [f"# Rewrite report ({mode.label})", ""]
-    counts: dict[str, int] = {}
-    for o in outcomes:
-        counts[o.status] = counts.get(o.status, 0) + 1
-    lines.append(", ".join(f"{k}: {v}" for k, v in sorted(counts.items())) or "nothing selected")
-    for o in outcomes:
-        lines += ["", f"## {o.block_id}: {o.status}" + (f" ({o.reason})" if o.reason else "")]
-        lines += ["", "**Original**", "", o.original]
-        if o.rewrite:
-            lines += ["", "**Rewrite**", "", o.rewrite]
-            lines.append(
-                f"\nStyle score {o.ai_score_before:.2f} → {o.ai_score_after or 0:.2f} "
-                "(diagnostic only)"
-            )
-        for c in o.candidates:
-            failed = [g.gate for g in c.gates if not g.passed]
-            status = "pass" if c.passed else f"fail {failed or c.error}"
-            lines.append(f"- round {c.round}, t={c.temperature}: {status}")
+def _fmt_score(s: ScoreSummary) -> str:
+    score = "-" if s.score is None else f"{s.score:.2f}"
+    return f"{score} ({s.document_band}; bands {s.bands})"
+
+
+def _report(result: PipelineResult, mode: Mode) -> str:
+    lines = [
+        f"# Rewrite report ({mode.label})",
+        "",
+        f"AI-likeness indicator: before {_fmt_score(result.before)} → "
+        f"after {_fmt_score(result.after)}",
+    ]
+    for p in result.paragraphs:
+        lines += ["", f"## {p.block_id}: {p.status}" + (f" ({p.reason})" if p.reason else "")]
+        lines += ["", "**Original**", "", p.original]
+        if p.rewrite:
+            lines += ["", "**Rewrite**", "", p.rewrite]
+        lines.append(f"\nScore {p.score_before} → {p.score_after} (indicator only)")
     return "\n".join(lines) + "\n"
 
 
@@ -103,58 +80,43 @@ async def _run(args: argparse.Namespace) -> None:
         for m in modes.values():
             print(f"{m.id:32} {m.label:28} phase {m.phase}  view={m.default_view}")
         return
-
     if args.mode not in modes:
         sys.exit(f"unknown mode {args.mode!r}; run `dtt modes`")
     mode = modes[args.mode]
     path = Path(args.file)
-    data, doc = _load(path)
-    result = await _analyze(doc, mode, args.sapling)
+    fmt = _format_of(path)
+    data = path.read_bytes()
+    providers = detector_providers(mode, sapling=args.sapling)
+
     if args.command == "analyze":
-        _print_analysis(doc, result)
+        doc = parse(data, fmt)
+        _print_analysis(doc, await analyze(doc, providers))
         return
 
-    config = EngineConfig()
-    if args.include_uncertain:
-        config.rewrite_bands = {Band.ELEVATED, Band.UNCERTAIN}
-    analysis = None if args.all else result
-    if args.direct:
-        infra = default_modes_dir().parent
-        load_env_file(infra.parent / "docker" / ".env")
-        direct = DirectLLM(load_routes(infra))
-        try:
-            engine = RewriteEngine(
-                direct,
-                mode,
-                scorer=None if args.no_nli else LlmEntailmentScorer(direct),
-                config=config,
-            )
-            outcomes = await engine.rewrite_document(doc, analysis=analysis)
-        finally:
-            await direct.aclose()
-        print(f"served by: {direct.served_by}")
-    else:
-        async with GatewayClient(
-            os.environ.get("GATEWAY_URL", "http://localhost:8100"),
-            os.environ.get("GATEWAY_SERVICE_TOKEN", "dev-gateway-token-change-me"),
-        ) as client:
-            tenant = os.environ.get("DTT_TENANT_ID", _LOCAL_TENANT)
-            llm = GatewayLLM(client, Caller(tenant_id=tenant))
-            engine = RewriteEngine(
-                llm,
-                mode,
-                scorer=None if args.no_nli else LlmEntailmentScorer(llm),
-                config=config,
-            )
-            outcomes = await engine.rewrite_document(doc, analysis=analysis)
+    scope: Scope = (
+        "all" if args.all else "flagged_uncertain" if args.include_uncertain else "flagged"
+    )
+    async with open_llm("direct" if args.direct else "gateway") as llm:
+        result = await run_pipeline(
+            data,
+            fmt,
+            mode,
+            llm=llm,
+            providers=providers,
+            scorer=None if args.no_nli else LlmEntailmentScorer(llm),
+            scope=scope,
+        )
 
-    rewrites = {o.block_id: o.rewrite_masked for o in outcomes if o.rewrite_masked}
     out_path = Path(args.output) if args.output else path.with_stem(path.stem + ".rewritten")
-    out_path.write_bytes(export(data, doc, rewrites))
+    out_path.write_bytes(result.output)
     report_path = out_path.with_suffix(".report.md")
-    report_path.write_text(_report(outcomes, mode), encoding="utf-8")
-    done = sum(o.status == "rewritten" for o in outcomes)
-    print(f"{done}/{len(outcomes)} selected blocks rewritten → {out_path}\nreport → {report_path}")
+    report_path.write_text(_report(result, mode), encoding="utf-8")
+    done = sum(p.status == "rewritten" for p in result.paragraphs)
+    print(
+        f"{done}/{len(result.paragraphs)} selected paragraphs rewritten → {out_path}\n"
+        f"AI-likeness indicator: {_fmt_score(result.before)} → {_fmt_score(result.after)}\n"
+        f"report → {report_path}"
+    )
 
 
 def main() -> None:

@@ -23,6 +23,12 @@ deployments:
     rpm: 30
     context_window: 131072
     requires_env: GROQ_API_KEY
+  groq-qwen3-27b:
+    # Different family from the gpt-oss judge, so it can serve rewrites.
+    provider: groq
+    rpm: 30
+    context_window: 131072
+    requires_env: GROQ_API_KEY
 
   # ---- Google Gemini (free tier; never used for document text) ----
   gemini-2.5-flash:
@@ -103,7 +109,7 @@ aliases:
   rewrite:
     description: Style-only paragraph rewriting with meaning preserved
     # Fallbacks stay outside the gpt-oss family so the nli-judge never grades its own output.
-    deployments: [mistral-small, mistral-medium, openrouter-gemma-4-31b, openrouter-nemotron-3-super, ollama-qwen2.5-7b]
+    deployments: [mistral-small, mistral-medium, groq-qwen3-27b, openrouter-gemma-4-31b, openrouter-nemotron-3-super, ollama-qwen2.5-7b]
     cache: exact
     redact_pii: false
     injection_mode: flag

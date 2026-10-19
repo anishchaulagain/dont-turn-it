@@ -12,6 +12,10 @@ model_list:
     litellm_params:
       model: groq/openai/gpt-oss-120b
       api_key: os.environ/GROQ_API_KEY
+  - model_name: groq-qwen3-27b
+    litellm_params:
+      model: groq/qwen/qwen3.8-27b
+      api_key: os.environ/GROQ_API_KEY
 
   # ---- Gemini ----
   - model_name: gemini-2.5-flash

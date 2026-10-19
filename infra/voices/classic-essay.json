@@ -1,0 +1,24 @@
+{
+  "id": "classic-essay",
+  "label": "Thoughtful personal essay",
+  "description": "Reflective, first-person essay prose from classic human essayists: varied sentences, concrete images, an individual point of view. Use its rhythm and directness, not its old-fashioned vocabulary.",
+  "source": "Project Gutenberg: Stevenson, Virginibus Puerisque (1881); Chesterton, Tremendous Trifles (1909); Lamb, Essays of Elia (1823); Emerson, Essays: First Series (1841). 878 paragraphs.",
+  "license": "Public domain in the USA (Project Gutenberg; trademark removed)",
+  "targets": {
+    "sentence_words_mean": 23.8,
+    "sentence_words_sd": 17.9,
+    "word_chars_mean": 4.38,
+    "contractions_per_100_words": 0.49,
+    "first_person_per_100_words": 2.86,
+    "transition_opener_share": 0.008,
+    "question_share": 0.04
+  },
+  "exemplars": [
+    "Charles Lamb ought really not to abuse Scotland in the pleasant way he so often does in the sylvan shades of Enfield; for Scotland loves Charles Lamb; but he is wayward and wilful in his wisdom, and conceits that many a Cockney is a better man even than Christopher North. But what will not Christopher forgive to Genius and Goodness? Even Lamb bleating libels on his native land. Nay, he learns lessons of humanity, even from the mild malice of Elia, and breathes a blessing on him and his household in their Bower of Rest.",
+    "Nothing could be more intelligent or natural than this mistake. Any one looking for the first time at the trees might fancy that they were indeed vast and titanic fans, which by their mere waving agitated the air around them for miles. Nothing, I say, could be more human and excusable than the belief that it is the trees which make the wind. Indeed, the belief is so human and excusable that it is, as a matter of fact, the belief of about ninety-nine out of a hundred of the philosophers, reformers, sociologists, and politicians of the great age in which we live. My small friend was, in fact, very like the principal modern thinkers; only much nicer.",
+    "There is some merit in putting a handsome face upon indigent circumstances. To bully and swagger away the sense of them, before strangers, may be not always discommendable. Tibbs, and Bobadil, even when detected, have more of our admiration than contempt. But for a man to put the cheat upon himself; to play the Bobadil at home; and, steeped in poverty up to the lips, to fancy himself all the while chin-deep in riches, is a strain of constitutional philosophy, and a mastery over fortune, which was reserved for my old friend Captain Jackson.",
+    "Marriage by its best title is a monopoly, and not of the least invidious sort. It is the cunning of most possessors of any exclusive privilege to keep their advantage as much out of sight as possible, that their less favoured neighbours, seeing little of the benefit, may the less be disposed to question the right. But these married monopolists thrust the most obnoxious part of their patent into our faces.",
+    "They next fell to quibbles and conundrums. The question being proposed, who had the greatest number of followers--the _Quarter Days_ said, there could be no question as to that; for they had all the creditors in the world dogging their heels. But _April Fool_ gave it in favour of the _Forty Days before Easter_; because the debtors in all cases outnumbered the creditors, and they kept _lent_ all the year.",
+    "Shall I be thought fantastical, if I confess, that the names of some of our poets sound sweeter, and have a finer relish to the ear--to mine, at least--than that of Milton or of Shakspeare? It may be, that the latter are more staled and rung upon in common discourse. The sweetest names, and which carry a perfume in the mention, are, Kit Marlowe, Drayton, Drummond of Hawthornden, and Cowley."
+  ]
+}

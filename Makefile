@@ -7,11 +7,11 @@ INFRA        := postgres redis rabbitmq qdrant minio litellm
 BACKEND      := cd apps/backend &&
 FRONTEND     := cd apps/frontend &&
 # uv workspace members, each tested/type-checked in its own run.
-PY_MEMBERS   := libs/llm_client libs/docmodel libs/verification libs/detection libs/rewriting services/gateway services/api
+PY_MEMBERS   := libs/llm_client libs/docmodel libs/verification libs/detection libs/rewriting services/gateway services/docs_api services/api
 
 .DEFAULT_GOAL := help
 .PHONY: help env install up up-all down down-v logs ps models dev dev-backend dev-gateway \
-        dev-frontend docker-dev migrate migration seed test test-unit lint format typecheck check
+        dev-frontend dev-docs dev-studio docker-dev migrate migration seed test test-unit lint format typecheck check
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -66,6 +66,13 @@ dev-gateway:
 dev-frontend:
 	$(FRONTEND) npm run dev
 
+# Document service on :8200. Needs no Docker: calls providers with keys from docker/.env.
+dev-docs:
+	$(BACKEND) uv run uvicorn docs_api.main:app --reload --port 8200
+
+dev-studio: ## Writing Studio only (document service + frontend), no Docker needed
+	@$(MAKE) -j2 dev-docs dev-frontend
+
 # ---------- Database ----------
 migrate: ## Apply DB migrations
 	$(BACKEND) uv run alembic -c libs/db/alembic.ini upgrade head
@@ -82,7 +89,7 @@ test: ## Run all tests (API integration tests need `make up`)
 	$(FRONTEND) npm run lint
 
 test-unit: ## Run tests that need no services
-	@for m in libs/llm_client libs/docmodel libs/verification libs/detection libs/rewriting services/gateway; do (cd apps/backend/$$m && uv run pytest) || exit 1; done
+	@for m in libs/llm_client libs/docmodel libs/verification libs/detection libs/rewriting services/gateway services/docs_api; do (cd apps/backend/$$m && uv run pytest) || exit 1; done
 	cd apps/backend/services/api && uv run pytest tests/unit
 
 lint: ## Lint backend and frontend

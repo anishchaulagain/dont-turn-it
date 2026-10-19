@@ -117,3 +117,11 @@ def test_harmful_perturbations_are_caught(name: str) -> None:
     verdict = run_deterministic_gates(ORIGINAL, HARMFUL[name])
     assert not verdict.passed, f"{name} slipped through"
     assert verdict.feedback()
+
+
+def test_frequency_qualifier_dropped_is_caught() -> None:
+    # Live miss on the safeguarding report (prompt v3, Nemotron rewriter).
+    a = "Lateness and absence are common when no adult supports a child's morning."
+    b = "Lateness and absence appear when no adult helps the child get ready in the morning."
+    r = check_polarity(a, b)
+    assert not r.passed and "partial_quantifier_removed" in r.details["problems"]

@@ -33,7 +33,7 @@ select = ["E", "F", "I", "UP", "B"]
 known-third-party = ["alembic"]
 known-first-party = [
     "platform_core", "platform_db", "llm_client", "platform_api", "gateway",
-    "docmodel", "verification", "detection", "rewriting",
+    "docmodel", "verification", "detection", "rewriting", "docs_api",
 ]
 
 [tool.ruff.lint.flake8-bugbear]

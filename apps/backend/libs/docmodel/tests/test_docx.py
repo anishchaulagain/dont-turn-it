@@ -108,3 +108,16 @@ def test_export_rejects_changed_document() -> None:
     doc.blocks[1] = doc.blocks[1].model_copy(update={"text": "something else"})
     with pytest.raises(ValueError, match="changed"):
         export(data, doc, {doc.blocks[1].id: "x"})
+
+
+def test_export_leaves_every_other_package_part_byte_identical() -> None:
+    import zipfile
+
+    data = make_docx()
+    doc = parse(data, DocFormat.DOCX)
+    para = doc.blocks[2]
+    out = export(data, doc, {para.id: "A rewritten bullet point that is still long enough here."})
+    before, after = zipfile.ZipFile(io.BytesIO(data)), zipfile.ZipFile(io.BytesIO(out))
+    assert before.namelist() == after.namelist()
+    changed = [n for n in before.namelist() if before.read(n) != after.read(n)]
+    assert changed == ["word/document.xml"]

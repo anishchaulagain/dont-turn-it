@@ -11,7 +11,7 @@ from docmodel.ir import (
     SpanKind,
 )
 from docmodel.parsers.text import apply_text_rewrites, parse_markdown, parse_txt
-from docmodel.protect import detect_spans, mask, split_tokens, tokens_in, unmask
+from docmodel.protect import detect_spans, mask, remask, split_tokens, tokens_in, unmask
 from docmodel.segment import split_sentences
 
 
@@ -51,6 +51,7 @@ __all__ = [
     "parse_docx",
     "parse_markdown",
     "parse_txt",
+    "remask",
     "split_sentences",
     "split_tokens",
     "tokens_in",

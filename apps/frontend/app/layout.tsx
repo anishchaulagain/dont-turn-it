@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Platform",
-  description: "Multi-provider LLM routing, GraphRAG and evaluation",
+  title: "Writing Studio",
+  description: "Find AI-like writing and rewrite it naturally, with meaning checks",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

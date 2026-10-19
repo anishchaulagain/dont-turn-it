@@ -18,11 +18,13 @@ byte-identical in the XML.
 import copy
 import io
 import re
+import zipfile
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from docx import Document as open_docx
+from docx.opc.oxml import serialize_part_xml
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
@@ -346,6 +348,22 @@ def apply_docx_rewrites(data: bytes, doc_ir: Document, replacements: dict[str, s
         for el in [*starts, *content, *ends]:
             p.append(el)
 
+    return _replace_part(data, doc.part.partname.lstrip("/"), serialize_part_xml(doc.element))
+
+
+def _replace_part(original: bytes, part_name: str, new_xml: bytes) -> bytes:
+    """Copy the original package entry by entry and swap only the main document part.
+
+    `Document.save()` would re-serialise every XML part (styles, numbering, footers,
+    settings, core properties). Copying the other entries' raw bytes guarantees the
+    export changes nothing but the rewritten paragraphs.
+    """
     out = io.BytesIO()
-    doc.save(out)
+    with (
+        zipfile.ZipFile(io.BytesIO(original)) as src,
+        zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as dst,
+    ):
+        for info in src.infolist():
+            payload = new_xml if info.filename == part_name else src.read(info.filename)
+            dst.writestr(info, payload, compress_type=info.compress_type)
     return out.getvalue()

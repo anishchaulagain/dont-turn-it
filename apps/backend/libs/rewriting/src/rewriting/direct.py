@@ -12,6 +12,7 @@ training and human review; docs/PLAN.md §8A.3).
 import asyncio
 import json
 import os
+import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -84,7 +85,8 @@ def load_routes(infra: Path) -> dict[str, list[Route]]:
 
 
 def _strip_fences(text: str) -> str:
-    text = text.strip()
+    # Reasoning models (qwen3) may prepend <think>...</think> even in JSON mode.
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
     if text.startswith("```"):
         text = text.split("\n", 1)[1] if "\n" in text else ""
         text = text.rsplit("```", 1)[0]

@@ -41,3 +41,7 @@ Thumbs.db
 !.vscode/extensions.json
 
 *.docx
+
+# Local caches / service data
+.npm-cache/
+.data/

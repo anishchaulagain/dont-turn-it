@@ -157,3 +157,31 @@ def unmask(text: str, legend: dict[str, ProtectedSpan]) -> str:
         return span.text
 
     return TOKEN_RE.sub(restore, text)
+
+
+def remask(text: str, legend: dict[str, ProtectedSpan]) -> tuple[str, list[str]]:
+    """Re-insert placeholders into plain text a person edited.
+
+    Each protected span is located by its exact text anywhere in the edited text (the
+    person may have moved it), taking the first occurrence not already claimed. Spans
+    that were removed or changed are reported as missing; zero-length spans (footnote
+    references, images) cannot be found in plain text and are reported missing too.
+    """
+    claimed: list[tuple[int, int, str]] = []
+    missing: list[str] = []
+    for token, span in legend.items():
+        pos = text.find(span.text) if span.text else -1
+        while pos >= 0 and any(s < pos + len(span.text) and pos < e for s, e, _ in claimed):
+            pos = text.find(span.text, pos + 1)
+        if pos < 0:
+            missing.append(token)
+        else:
+            claimed.append((pos, pos + len(span.text), token))
+    out: list[str] = []
+    cursor = 0
+    for start, end, token in sorted(claimed):
+        out.append(text[cursor:start])
+        out.append(token)
+        cursor = end
+    out.append(text[cursor:])
+    return "".join(out), missing

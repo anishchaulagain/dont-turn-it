@@ -55,7 +55,7 @@ jobs:
       - name: Mypy
         run: |
           uv run mypy libs/core/src libs/db/src
-          for m in libs/llm_client libs/docmodel libs/verification libs/detection libs/rewriting services/gateway services/api; do
+          for m in libs/llm_client libs/docmodel libs/verification libs/detection libs/rewriting services/gateway services/docs_api services/api; do
             (cd $m && uv run mypy --config-file ../../pyproject.toml src tests)
           done
 
@@ -68,7 +68,7 @@ jobs:
 
       - name: Tests
         run: |
-          for m in libs/llm_client libs/docmodel libs/verification libs/detection libs/rewriting services/gateway services/api; do
+          for m in libs/llm_client libs/docmodel libs/verification libs/detection libs/rewriting services/gateway services/docs_api services/api; do
             echo "== $m"
             (cd $m && uv run pytest -v)
           done

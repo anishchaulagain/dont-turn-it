@@ -8,6 +8,7 @@ original. A failing rewrite is never returned.
 
 import asyncio
 import statistics
+from collections.abc import Callable
 from typing import Literal
 
 import structlog
@@ -22,6 +23,7 @@ from llm_client import GatewayError
 from rewriting.llm import ChatLLM
 from rewriting.modes import Freedom, Mode
 from rewriting.prompts import PROMPT_VERSION, build_messages, clean_output, user_prompt
+from rewriting.voices import Voice
 from verification import EntailmentScorer, GateResult, check_entailment, run_deterministic_gates
 
 logger = structlog.get_logger(__name__)
@@ -78,6 +80,7 @@ class RewriteEngine:
         scorer: EntailmentScorer | None = None,
         config: EngineConfig | None = None,
         glossary: list[str] | None = None,
+        voice: Voice | None = None,
     ) -> None:
         self._llm = llm
         self._mode = mode
@@ -85,6 +88,7 @@ class RewriteEngine:
         self._cfg = config or EngineConfig()
         self._policy = mode.gate_policy(glossary)
         self._style = StylometricProvider(mode.detector_mode)
+        self._voice = voice
 
     async def style_score(self, text: str) -> float:
         """Mean stylometric AI-likeness of a text (diagnostic, used to rank candidates)."""
@@ -104,7 +108,7 @@ class RewriteEngine:
     ) -> CandidateResult:
         try:
             raw = await self._llm.complete(
-                build_messages(self._mode, freedom, messages_user),
+                build_messages(self._mode, freedom, messages_user, self._voice),
                 model=self._cfg.model,
                 temperature=temperature,
                 max_tokens=self._cfg.max_tokens,
@@ -217,8 +221,12 @@ class RewriteEngine:
         *,
         analysis: DocumentAnalysis | None = None,
         block_ids: set[str] | None = None,
+        on_progress: Callable[[int, int], None] | None = None,
     ) -> list[BlockOutcome]:
         targets = self.select_blocks(doc, analysis, block_ids)
+        done = 0
+        if on_progress:
+            on_progress(0, len(targets))
         reasons: dict[str, list[str]] = {}
         for s in analysis.sentences if analysis else []:
             bucket = reasons.setdefault(s.block_id, [])
@@ -255,6 +263,10 @@ class RewriteEngine:
                     reason=result.reason,
                     candidates=len(result.candidates),
                 )
+                nonlocal done
+                done += 1
+                if on_progress:
+                    on_progress(done, len(targets))
                 return result
 
         return list(await asyncio.gather(*(run(b) for b in targets)))

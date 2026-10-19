@@ -186,6 +186,10 @@ _UNIVERSAL = _lexicon("all", "every", "each", "always", "never", "none", "entire
 _PARTIAL = _lexicon(
     "some", "many", "most", "few", "several", "often", "sometimes", "rarely", "usually",
     "frequently", "occasionally", "generally", "typically", "majority", "minority",
+    # Frequency adjectives ("lateness ... is common when ..." -> "appears when ..." was
+    # a live miss: dropping them turns a tendency into a rule).
+    "common", "commonly", "uncommon", "frequent", "rare", "widespread", "prevalent",
+    "occasional", "regular", "regularly",
 )  # fmt: skip
 _DEONTIC = re.compile(
     r"\b(must not|must|shall not|shall|should not|should|may not|may|required|"

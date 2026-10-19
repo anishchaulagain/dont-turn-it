@@ -1,6 +1,15 @@
 import pytest
 
-from docmodel import SpanKind, detect_spans, mask, split_sentences, split_tokens, tokens_in, unmask
+from docmodel import (
+    SpanKind,
+    detect_spans,
+    mask,
+    remask,
+    split_sentences,
+    split_tokens,
+    tokens_in,
+    unmask,
+)
 
 
 def kinds(text: str) -> list[tuple[SpanKind, str]]:
@@ -84,3 +93,14 @@ def test_sentence_offsets_match_text() -> None:
     text = "  One sentence here.   Another follows.  "
     for s in split_sentences(text):
         assert text[s.start : s.end] == s.text
+
+
+def test_remask_after_human_edit() -> None:
+    text = "Rates rose (Smith, 2020) per https://x.org and fell [4]."
+    masked, legend = mask(text, detect_spans(text))
+    edited = "Per https://x.org, rates rose (Smith, 2020) before falling."
+    remasked, missing = remask(edited, legend)
+    # The URL moved before the citation and the numeric citation [4] was deleted.
+    assert remasked == "Per ⟦U1⟧, rates rose ⟦C1⟧ before falling."
+    assert missing == ["⟦C2⟧"]
+    assert remask(text, legend) == (masked, [])
